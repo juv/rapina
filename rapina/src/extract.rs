@@ -2,11 +2,14 @@ use bytes::Bytes;
 use http::Request;
 use http_body_util::BodyExt;
 use serde::de::DeserializeOwned;
+use std::collections::HashMap;
 
 use crate::error::Error;
 use crate::response::{BoxBody, IntoResponse};
 
 pub struct Json<T>(pub T);
+
+pub type PathParams = HashMap<String, String>;
 
 impl<T> Json<T> {
     pub fn into_inner(self) -> T {
@@ -39,4 +42,25 @@ impl<T: serde::Serialize> IntoResponse for Json<T> {
             .body(http_body_util::Full::new(Bytes::from(body)))
             .unwrap()
     }
+}
+
+pub fn extract_path_params(pattern: &str, path: &str) -> Option<PathParams> {
+    let pattern_parts: Vec<&str> = pattern.split('/').collect();
+    let path_parts: Vec<&str> = path.split('/').collect();
+
+    if pattern_parts.len() != path_parts.len() {
+        return None;
+    }
+
+    let mut params = HashMap::new();
+
+    for (pattern_part, path_part) in pattern_parts.iter().zip(path_parts.iter()) {
+        if let Some(param_name) = pattern_part.strip_prefix(':') {
+            params.insert(param_name.to_string(), path_part.to_string());
+        } else if pattern_part != path_part {
+            return None;
+        }
+    }
+
+    Some(params)
 }
