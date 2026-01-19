@@ -81,7 +81,7 @@ fn route_macro(attr: TokenStream, item: TokenStream) -> TokenStream {
 #[cfg(test)]
 mod tests {
     use  super::route_macro_core;
-    use proc_macro2::TokenStream;
+    
     use quote::quote;
     use syn::ItemFn;
 
