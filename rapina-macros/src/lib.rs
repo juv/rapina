@@ -102,8 +102,8 @@ mod tests {
         // parse back and verify structure
         let output_fn: ItemFn = syn::parse2(output).expect("expected function");
 
-        // check should have 2 parameters: req and params
-        assert_eq!(output_fn.sig.inputs.len(), 2);
+        // check should have 3 parameters: req, params, and state
+        assert_eq!(output_fn.sig.inputs.len(), 3);
 
         // check if function name preserved
         assert_eq!(output_fn.sig.ident.to_string(), "hello");
@@ -121,8 +121,8 @@ mod tests {
         let output = route_macro_core(path, input);
         let output_func: ItemFn = syn::parse2(output).expect("should parse as function");
 
-        // check should have 2 parameters: req and params
-        assert_eq!(output_func.sig.inputs.len(), 2);
+        // check should have 3 parameters: req, params, and state
+        assert_eq!(output_func.sig.inputs.len(), 3);
 
         let body_str = quote!(#output_func.block).to_string();
 
@@ -146,8 +146,8 @@ mod tests {
         let output = route_macro_core(path, input);
         let output_func: ItemFn = syn::parse2(output).expect("should parse as function");
 
-        // Check signature has req and params
-        assert_eq!(output_func.sig.inputs.len(), 2);
+        // Check signature has req, params, and state
+        assert_eq!(output_func.sig.inputs.len(), 3);
 
         // Check both extractions are present in body
         let body_str = quote!(#output_func.block).to_string();

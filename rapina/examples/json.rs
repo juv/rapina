@@ -1,4 +1,3 @@
-use rapina::extract::{FromRequest, PathParams};
 use rapina::prelude::*;
 
 #[derive(Deserialize)]
@@ -14,12 +13,9 @@ struct User {
     email: String,
 }
 
-async fn create_user(req: hyper::Request<hyper::body::Incoming>, params: PathParams) -> Json<User> {
-    let body = Json::<CreateUser>::from_request(req, &params)
-        .await
-        .unwrap();
+#[post("/users")]
+async fn create_user(body: Json<CreateUser>) -> Json<User> {
     let input = body.into_inner();
-
     Json(User {
         id: 1,
         name: input.name,
@@ -27,10 +23,8 @@ async fn create_user(req: hyper::Request<hyper::body::Incoming>, params: PathPar
     })
 }
 
-async fn list_users(
-    _req: hyper::Request<hyper::body::Incoming>,
-    _params: PathParams,
-) -> Json<Vec<User>> {
+#[get("/users")]
+async fn list_users() -> Json<Vec<User>> {
     Json(vec![
         User {
             id: 1,

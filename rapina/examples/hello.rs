@@ -1,17 +1,18 @@
-use rapina::extract::PathParams;
 use rapina::prelude::*;
 
-async fn hello(_req: hyper::Request<hyper::body::Incoming>, _params: PathParams) -> &'static str {
+#[get("/")]
+async fn hello() -> &'static str {
     "Hello, Rapina!"
 }
 
-async fn health(_req: hyper::Request<hyper::body::Incoming>, _params: PathParams) -> StatusCode {
+#[get("/health")]
+async fn health() -> StatusCode {
     StatusCode::OK
 }
 
-async fn get_user(_req: hyper::Request<hyper::body::Incoming>, params: PathParams) -> String {
-    let id = params.get("id").unwrap();
-    format!("ID: {}", id)
+#[get("/users/:id")]
+async fn get_user(id: Path<u64>) -> String {
+    format!("ID: {}", id.into_inner())
 }
 
 #[tokio::main]
