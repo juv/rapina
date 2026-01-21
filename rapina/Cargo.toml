@@ -1,7 +1,14 @@
 [package]
 name = "rapina"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 edition = "2024"
+description = "A fast, type-safe web framework for Rust inspired by FastAPI"
+license = "MIT"
+repository = "https://github.com/arferreira/rapina"
+documentation = "https://docs.rs/rapina"
+readme = "../README.md"
+keywords = ["web", "framework", "http", "async", "api"]
+categories = ["web-programming::http-server", "asynchronous"]
 
 [dependencies]
 # Async
@@ -24,4 +31,4 @@ validator = { version = "0.20.0", features = ["derive"] }
 uuid = { version = "1", features = ["v4"] }
 
 # Our macros
-rapina-macros = { path = "../rapina-macros/" }
+rapina-macros = { version = "0.1.0-alpha.1", path = "../rapina-macros/" }

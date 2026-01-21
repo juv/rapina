@@ -1,7 +1,13 @@
 [package]
 name = "rapina-macros"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 edition = "2024"
+description = "Procedural macros for the Rapina web framework"
+license = "MIT"
+repository = "https://github.com/arferreira/rapina"
+documentation = "https://docs.rs/rapina-macros"
+keywords = ["web", "framework", "macros", "rapina"]
+categories = ["web-programming::http-server"]
 
 [lib]
 proc-macro = true
