@@ -52,3 +52,12 @@ impl IntoResponse for (StatusCode, String) {
             .unwrap()
     }
 }
+
+impl<T: IntoResponse, E: IntoResponse> IntoResponse for std::result::Result<T, E> {
+    fn into_response(self) -> Response<BoxBody> {
+        match self {
+            Ok(v) => v.into_response(),
+            Err(e) => e.into_response(),
+        }
+    }
+}

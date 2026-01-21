@@ -22,7 +22,10 @@ pub fn delete(attr: TokenStream, item: TokenStream) -> TokenStream {
     route_macro(attr, item)
 }
 
-fn route_macro_core(attr: proc_macro2::TokenStream, item: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
+fn route_macro_core(
+    attr: proc_macro2::TokenStream,
+    item: proc_macro2::TokenStream,
+) -> proc_macro2::TokenStream {
     let _path: LitStr = syn::parse2(attr).expect("expected path as string literal");
     let func: ItemFn = syn::parse2(item).expect("expected function");
 
@@ -80,8 +83,8 @@ fn route_macro(attr: TokenStream, item: TokenStream) -> TokenStream {
 
 #[cfg(test)]
 mod tests {
-    use  super::route_macro_core;
-    
+    use super::route_macro_core;
+
     use quote::quote;
     use syn::ItemFn;
 
@@ -107,58 +110,57 @@ mod tests {
     }
 
     #[test]
-fn test_function_with_single_extractor() {
-    let path = quote!("/users/:id");
-    let input = quote! {
-        async fn get_user(id: rapina::extract::Path<u64>) -> String {
-            format!("{}", id.into_inner())
-        }
-    };
-    
-    let output = route_macro_core(path, input);
-    let output_func: ItemFn = syn::parse2(output).expect("should parse as function");
-    
-    // check should have 2 parameters: req and params
-    assert_eq!(output_func.sig.inputs.len(), 2);
-    
-    let body_str = quote!(#output_func.block).to_string();
+    fn test_function_with_single_extractor() {
+        let path = quote!("/users/:id");
+        let input = quote! {
+            async fn get_user(id: rapina::extract::Path<u64>) -> String {
+                format!("{}", id.into_inner())
+            }
+        };
 
-    // check should contain extraction code
-    assert!(body_str.contains("from_request"));
-    assert!(body_str.contains("id"));
-}
+        let output = route_macro_core(path, input);
+        let output_func: ItemFn = syn::parse2(output).expect("should parse as function");
 
-#[test]
-fn test_function_with_multiple_extractors() {
-    let path = quote!("/users");
-    let input = quote! {
-        async fn create_user(
-            id: rapina::extract::Path<u64>,
-            body: rapina::extract::Json<String>
-        ) -> String {
-            "created".to_string()
-        }
-    };
-    
-    let output = route_macro_core(path, input);
-    let output_func: ItemFn = syn::parse2(output).expect("should parse as function");
-    
-    // Check signature has req and params
-    assert_eq!(output_func.sig.inputs.len(), 2);
-    
-    // Check both extractions are present in body
-    let body_str = quote!(#output_func.block).to_string();
-    assert!(body_str.contains("id"));
-    assert!(body_str.contains("body"));
-}
+        // check should have 2 parameters: req and params
+        assert_eq!(output_func.sig.inputs.len(), 2);
 
-#[test]
-#[should_panic(expected = "expected function")]
-fn test_invalid_input_panics() {
-    let path = quote!("/");
-    let invalid_input = quote! { not_a_function };
-    
-    route_macro_core(path, invalid_input);
-}
-    
+        let body_str = quote!(#output_func.block).to_string();
+
+        // check should contain extraction code
+        assert!(body_str.contains("from_request"));
+        assert!(body_str.contains("id"));
+    }
+
+    #[test]
+    fn test_function_with_multiple_extractors() {
+        let path = quote!("/users");
+        let input = quote! {
+            async fn create_user(
+                id: rapina::extract::Path<u64>,
+                body: rapina::extract::Json<String>
+            ) -> String {
+                "created".to_string()
+            }
+        };
+
+        let output = route_macro_core(path, input);
+        let output_func: ItemFn = syn::parse2(output).expect("should parse as function");
+
+        // Check signature has req and params
+        assert_eq!(output_func.sig.inputs.len(), 2);
+
+        // Check both extractions are present in body
+        let body_str = quote!(#output_func.block).to_string();
+        assert!(body_str.contains("id"));
+        assert!(body_str.contains("body"));
+    }
+
+    #[test]
+    #[should_panic(expected = "expected function")]
+    fn test_invalid_input_panics() {
+        let path = quote!("/");
+        let invalid_input = quote! { not_a_function };
+
+        route_macro_core(path, invalid_input);
+    }
 }

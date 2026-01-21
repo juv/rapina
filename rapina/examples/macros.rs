@@ -24,8 +24,22 @@ async fn health() -> StatusCode {
 }
 
 #[get("/users/:id")]
-async fn get_user(id: Path<u64>) -> String {
-    format!("User ID: {}", id.into_inner())
+async fn get_user(id: Path<u64>) -> Result<Json<User>> {
+    let id = id.into_inner();
+
+    if id == 0 {
+        return Err(Error::bad_request("id cannot be zero"));
+    }
+
+    if id == 999 {
+        return Err(Error::not_found("user not found"));
+    }
+
+    Ok(Json(User {
+        id,
+        name: "Antonio".to_string(),
+        email: "antonio@tier3.dev".to_string(),
+    }))
 }
 
 #[post("/users")]
