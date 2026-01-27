@@ -18,7 +18,7 @@ mod trace_id;
 pub use body_limit::BodyLimitMiddleware;
 pub use request_log::RequestLogMiddleware;
 pub use timeout::TimeoutMiddleware;
-pub use trace_id::TraceIdMiddleware;
+pub use trace_id::{TraceIdMiddleware, TRACE_ID_HEADER};
 
 use std::future::Future;
 use std::pin::Pin;
@@ -33,7 +33,7 @@ use crate::router::Router;
 use crate::state::AppState;
 
 /// A boxed future type used by middleware.
-pub type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
+pub type BoxFuture<'a, T> = Pin<Box<dyn Future<Output=T> + Send + 'a>>;
 
 /// Trait for implementing custom middleware.
 ///
