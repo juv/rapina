@@ -7,7 +7,7 @@ use crate::response::BoxBody;
 
 use super::{BoxFuture, Middleware, Next};
 
-pub const TRACE_ID_HEADER: &'static str = "x-trace-id";
+pub const TRACE_ID_HEADER: &str = "x-trace-id";
 
 pub struct TraceIdMiddleware;
 

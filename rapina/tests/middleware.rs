@@ -1,7 +1,9 @@
 //! Integration tests for middleware functionality.
 
 use http::StatusCode;
-use rapina::middleware::{BodyLimitMiddleware, TimeoutMiddleware, TraceIdMiddleware, TRACE_ID_HEADER};
+use rapina::middleware::{
+    BodyLimitMiddleware, TRACE_ID_HEADER, TimeoutMiddleware, TraceIdMiddleware,
+};
 use rapina::prelude::*;
 use rapina::testing::TestClient;
 use std::time::Duration;
