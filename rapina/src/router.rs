@@ -244,6 +244,37 @@ impl Router {
             .collect()
     }
 
+    /// Adds all routes from another router with a path prefix to compose a group of endpoints.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use rapina::prelude::*;
+    ///
+    /// let users_router = Router::new()
+    ///     .get("", list_users)
+    ///     .post("", create_user);
+    ///     .get("/:id", get_user)
+    ///
+    /// let invoices_router = Router::new()
+    ///     .get("", list_invoices)
+    ///     .get("/:id", get_invoice)
+    ///
+    /// let router = Router::new()
+    ///     .middleware(RequestLogMiddleware::new())
+    ///     .group("/api/users", users_router)
+    ///     .group("/api/invoices", invoices_router);
+    /// ```
+    pub fn group(mut self, prefix_pattern: &str, router: Router) -> Self {
+        for (method, mut route) in router.routes {
+            let joined_route_path = Self::join_group_route_pattern(prefix_pattern, &route.pattern);
+            route.pattern = joined_route_path;
+            self.routes.push((method, route));
+        }
+
+        self
+    }
+
     /// Handles an incoming request by matching it to a route.
     pub async fn handle(&self, req: Request<Incoming>, state: &Arc<AppState>) -> Response<BoxBody> {
         let method = req.method().clone();
@@ -260,6 +291,21 @@ impl Router {
         }
 
         StatusCode::NOT_FOUND.into_response()
+    }
+
+    fn join_group_route_pattern(prefix: &str, route_path: &str) -> String {
+        let prefix = prefix.trim_end_matches('/');
+        let route_path = route_path.trim_start_matches('/');
+
+        let pattern = if prefix.is_empty() {
+            format!("/{}", route_path)
+        } else if route_path.is_empty() {
+            prefix.to_string()
+        } else {
+            format!("{}/{}", prefix, route_path)
+        };
+
+        pattern
     }
 }
 
@@ -460,5 +506,104 @@ mod tests {
         let routes = router.routes();
         assert_eq!(routes[0].handler_name, "named_handler");
         assert_eq!(routes[1].handler_name, "handler");
+    }
+
+    #[test]
+    fn test_join_group_route_pattern() {
+        assert_eq!(
+            Router::join_group_route_pattern("/api", "/users"),
+            "/api/users"
+        );
+        assert_eq!(
+            Router::join_group_route_pattern("/api/", "/users"),
+            "/api/users"
+        );
+        assert_eq!(
+            Router::join_group_route_pattern("/api", "users"),
+            "/api/users"
+        );
+        assert_eq!(
+            Router::join_group_route_pattern("api", "users"),
+            "api/users"
+        );
+        assert_eq!(
+            Router::join_group_route_pattern("/api/", "/users/"),
+            "/api/users/"
+        );
+        assert_eq!(Router::join_group_route_pattern("", "/users"), "/users");
+        assert_eq!(Router::join_group_route_pattern("/api", ""), "/api");
+    }
+
+    #[test]
+    fn test_router_group() {
+        let users_router = Router::new()
+            .get_named("", "list_users", |_req, _params, _state| async {
+                StatusCode::OK
+            })
+            .post_named("", "create_user", |_req, _params, _state| async {
+                StatusCode::CREATED
+            })
+            .get_named("/:id", "get_user", |_req, _params, _state| async {
+                StatusCode::OK
+            });
+
+        let router = Router::new()
+            .get_named("/health", "health_check", |_req, _params, _state| async {
+                StatusCode::OK
+            })
+            .group("/api/users", users_router);
+
+        let routes = router.routes();
+        assert_eq!(routes.len(), 4);
+        assert_eq!(routes[0].path, "/health");
+        assert_eq!(routes[1].path, "/api/users");
+        assert_eq!(routes[1].handler_name, "list_users");
+        assert_eq!(routes[2].path, "/api/users");
+        assert_eq!(routes[2].handler_name, "create_user");
+        assert_eq!(routes[3].path, "/api/users/:id");
+        assert_eq!(routes[3].handler_name, "get_user");
+    }
+
+    #[test]
+    fn test_multiple_router_groups() {
+        let users_router = Router::new()
+            .get_named("", "list_users", |_req, _params, _state| async {
+                StatusCode::OK
+            })
+            .post_named("", "create_user", |_req, _params, _state| async {
+                StatusCode::CREATED
+            })
+            .post_named("/:id", "get_user", |_req, _params, _state| async {
+                StatusCode::OK
+            });
+
+        let invoices_router = Router::new()
+            .get_named("", "list_invoices", |_req, _params, _state| async {
+                StatusCode::OK
+            })
+            .get_named("/:id", "get_invoice", |_req, _params, _state| async {
+                StatusCode::OK
+            });
+
+        let router = Router::new()
+            .get_named("/health", "health_check", |_req, _params, _state| async {
+                StatusCode::OK
+            })
+            .group("/api/users", users_router)
+            .group("/api/invoices", invoices_router);
+
+        let routes = router.routes();
+        assert_eq!(routes.len(), 6);
+        assert_eq!(routes[0].path, "/health");
+        assert_eq!(routes[1].path, "/api/users");
+        assert_eq!(routes[1].handler_name, "list_users");
+        assert_eq!(routes[2].path, "/api/users");
+        assert_eq!(routes[2].handler_name, "create_user");
+        assert_eq!(routes[3].path, "/api/users/:id");
+        assert_eq!(routes[3].handler_name, "get_user");
+        assert_eq!(routes[4].path, "/api/invoices");
+        assert_eq!(routes[4].handler_name, "list_invoices");
+        assert_eq!(routes[5].path, "/api/invoices/:id");
+        assert_eq!(routes[5].handler_name, "get_invoice");
     }
 }
