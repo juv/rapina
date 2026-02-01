@@ -251,17 +251,11 @@ impl Router {
     /// ```
     /// use rapina::prelude::*;
     ///
-    /// let users_router = Router::new()
-    ///     .get("", list_users)
-    ///     .post("", create_user);
-    ///     .get("/:id", get_user)
+    /// let users_router = Router::new();
     ///
-    /// let invoices_router = Router::new()
-    ///     .get("", list_invoices)
-    ///     .get("/:id", get_invoice)
+    /// let invoices_router = Router::new();
     ///
     /// let router = Router::new()
-    ///     .middleware(RequestLogMiddleware::new())
     ///     .group("/api/users", users_router)
     ///     .group("/api/invoices", invoices_router);
     /// ```
@@ -297,15 +291,13 @@ impl Router {
         let prefix = prefix.trim_end_matches('/');
         let route_path = route_path.trim_start_matches('/');
 
-        let pattern = if prefix.is_empty() {
+        if prefix.is_empty() {
             format!("/{}", route_path)
         } else if route_path.is_empty() {
             prefix.to_string()
         } else {
             format!("{}/{}", prefix, route_path)
-        };
-
-        pattern
+        }
     }
 }
 
