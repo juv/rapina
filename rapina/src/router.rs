@@ -260,6 +260,10 @@ impl Router {
     ///     .group("/api/invoices", invoices_router);
     /// ```
     pub fn group(mut self, prefix_pattern: &str, router: Router) -> Self {
+        if !prefix_pattern.starts_with("/") {
+            panic!("A group's prefix pattern must start with /");
+        }
+
         for (method, mut route) in router.routes {
             let joined_route_path = Self::join_group_route_pattern(prefix_pattern, &route.pattern);
             route.pattern = joined_route_path;
@@ -515,15 +519,17 @@ mod tests {
             "/api/users"
         );
         assert_eq!(
-            Router::join_group_route_pattern("api", "users"),
-            "api/users"
-        );
-        assert_eq!(
             Router::join_group_route_pattern("/api/", "/users/"),
             "/api/users/"
         );
         assert_eq!(Router::join_group_route_pattern("", "/users"), "/users");
         assert_eq!(Router::join_group_route_pattern("/api", ""), "/api");
+    }
+
+    #[test]
+    #[should_panic(expected = "A group's prefix pattern must start with /")]
+    fn test_invalid_router_group_prefix_pattern() {
+        Router::new().group("api/users", Router::new());
     }
 
     #[test]
@@ -565,7 +571,7 @@ mod tests {
             .post_named("", "create_user", |_req, _params, _state| async {
                 StatusCode::CREATED
             })
-            .post_named("/:id", "get_user", |_req, _params, _state| async {
+            .get_named("/:id", "get_user", |_req, _params, _state| async {
                 StatusCode::OK
             });
 
