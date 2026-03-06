@@ -162,12 +162,11 @@ mod tests {
 
     #[cfg(windows)]
     mod windows_tests {
-        use winapi::um::wincon::CTRL_BREAK_EVENT;
-        use winapi::um::wincon::GenerateConsoleCtrlEvent;
+        use windows::Win32::System::Console::{CTRL_BREAK_EVENT, GenerateConsoleCtrlEvent};
 
         pub(super) fn send_ctrl_break() {
             unsafe {
-                GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, 0);
+                GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, 0).unwrap();
             }
         }
     }

@@ -88,7 +88,7 @@ serial_test = "3"
 
 # Windows specific import for graceful shutdown tests
 [target.'cfg(windows)'.dev-dependencies]
-winapi = { version = "0.3", features = ["wincon"] }
+windows = { version = "0.62.2", features = ["Win32_System_Console"] }
 
 [features]
 default = []
