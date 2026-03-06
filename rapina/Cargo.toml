@@ -86,6 +86,10 @@ futures-util = { version = "0.3", optional = true, default-features = false, fea
 nix = { version = "0.31", features = ["signal"] }
 serial_test = "3"
 
+# Windows specific import for graceful shutdown tests
+[target.'cfg(windows)'.dev-dependencies]
+winapi = { version = "0.3", features = ["wincon"] }
+
 [features]
 default = []
 database = ["sea-orm", "sea-orm-migration", "async-trait"]
