@@ -35,16 +35,18 @@ pub(crate) async fn serve(
     let graceful = GracefulShutdown::new();
     let mut ctrl_c = pin!(tokio::signal::ctrl_c());
 
-    #[cfg(unix)]
-    {
-        use tokio::signal::unix::SignalKind;
-        let mut sigterm = tokio::signal::unix::signal(SignalKind::terminate())
-            .expect("failed to install SIGTERM handler");
-    }
-
-    #[cfg(not(unix))]
-    let mut sigterm = Box::pin(async {
-        std::future::pending::<()>().await;
+    let mut sigterm: Pin<Box<dyn Future<Output = ()> + Send>> = Box::pin(async {
+        #[cfg(unix)]
+        {
+            tokio::signal::unix::signal(SignalKind::terminate())
+                .expect("failed to install SIGTERM handler")
+                .recv()
+                .await;
+        }
+        #[cfg(not(unix))]
+        {
+            std::future::pending::<()>().await;
+        }
     });
 
     tracing::info!("Rapina listening on http://{}", addr);
