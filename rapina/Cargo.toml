@@ -55,16 +55,11 @@ jsonwebtoken = { version = "10.3.0", features = ["rust_crypto"] }
 # Rate Limiting
 dashmap = "6.1.0"
 
-<<<<<<< feature/add-compression-feature-flag
-# Compression (optional)
-flate2 =  { version = "1.1", optional = true }
-=======
 # SmallVec for stack-allocated path params
 smallvec = "1"
 
-# Compression
-flate2 = "1.1"
->>>>>>> main
+# Compression (optional)
+flate2 =  { version = "1.1", optional = true }
 
 # Our macros
 rapina-macros = { version = "0.9.0", path = "../rapina-macros/" }
@@ -75,7 +70,7 @@ inventory = "0.3"
 # Database (optional)
 sea-orm = { version = "1.1", optional = true, features = ["runtime-tokio-rustls"] }
 
-# Database migration (Optional)
+# Database migration (optional)
 sea-orm-migration = { version = "1.1", optional = true, features = ["runtime-tokio-rustls"] }
 async-trait = { version = "0.1", optional = true }
 
