@@ -67,7 +67,7 @@
 //! - [`BodyLimitMiddleware`](middleware::BodyLimitMiddleware) - Limit request body size
 //! - [`TraceIdMiddleware`](middleware::TraceIdMiddleware) - Add trace IDs to requests
 //! - [`RequestLogMiddleware`](middleware::RequestLogMiddleware) - Structured request logging
-//! - [`RateLimitMiddleware`](middleware::RateLimitMiddleware) - Token bucket rate limiting (requires `rate-limit` feature)
+//! - [`RateLimitMiddleware`](middleware::RateLimitMiddleware) - Token bucket rate limiting
 //!
 //! ## Introspection
 //!
@@ -101,6 +101,8 @@ pub mod health;
 pub mod introspection;
 #[cfg(feature = "database")]
 pub mod jobs;
+#[cfg(feature = "jwks")]
+pub mod jwt;
 #[cfg(feature = "metrics")]
 pub mod metrics;
 pub mod middleware;
@@ -144,6 +146,8 @@ pub mod prelude {
     pub use crate::introspection::RouteInfo;
     #[cfg(feature = "database")]
     pub use crate::jobs::{JobDescriptor, JobId, JobRequest, JobResult, JobRow, JobStatus, Jobs};
+    #[cfg(feature = "jwks")]
+    pub use crate::jwt::{JsonWebToken, JwksClient, JwksProvider};
     #[cfg(feature = "rate-limit")]
     pub use crate::middleware::{KeyExtractor, RateLimitConfig};
     pub use crate::middleware::{Middleware, Next, RequestLogConfig};
