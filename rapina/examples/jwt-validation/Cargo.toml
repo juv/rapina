@@ -11,4 +11,3 @@ rapina = { path = "../../", features = ["jwks"] }
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-jsonwebtoken = "10.3.0"
