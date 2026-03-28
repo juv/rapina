@@ -7,7 +7,9 @@ date = 2026-03-28
 
 Rapina supports validating JWTs issued by **external identity providers** (Google, Auth0, Keycloak, Azure AD, Okta, etc.) using their public **JSON Web Key Sets (JWKS)**. Instead of sharing a symmetric secret, your application fetches the provider's public keys and uses them to cryptographically verify incoming tokens.
 
-This is provided as an optional feature (`jwks`) and works independently from the built-in `AuthConfig`/`JWT_SECRET` mechanism.
+This is provided as an optional feature (`jwks`) and works independently from the [`AuthConfig`/`JWT_SECRET` mechanism ](authentication.md).
+
+This feature is generally preferred over the [`AuthConfig`/`JWT_SECRET` mechanism ](authentication.md) for production environments in case you are using an external identity provider.
 
 ---
 
