@@ -51,7 +51,7 @@ impl CronScheduler {
 
     /// Schedules a new background task to be executed according to the provided configuration.
     ///
-    /// The task must be an asynchronous closure or function that returns a `std::io::Result<()>`.
+    /// The task must be an asynchronous closure or function that returns a `Result<(), E>` where `E` implements `std::error::Error`.
     /// If the scheduled task returns an error, it will be automatically logged.
     ///
     /// In case blocking code is executed in `task`, the task can _not_ be

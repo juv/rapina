@@ -35,16 +35,20 @@ No database or external service is required. The scheduler runs entirely in-proc
 
 ## Defining a Cron Job
 
-A cron job is an async function (or closure) that returns `std::io::Result<()>`. If the function returns an error, it is automatically logged and the schedule continues. One failure does not stop future executions.
+A cron job is an async function (or closure) that returns a `Result<(), E>` where `E` implements `std::error::Error`.
+The simplest option is to use Rapina's own `Result<()>` from the prelude.
+If the function returns an error, it is automatically logged and the schedule continues. One failure does not stop future executions.
 
 ```rust
-async fn cleanup_expired_sessions() -> std::io::Result<()> {
+use rapina::prelude::*;
+
+async fn cleanup_expired_sessions() -> Result<()> {
     tracing::info!("Cleaning up expired sessions");
     // your cleanup logic here
     Ok(())
 }
 
-async fn sync_exchange_rates() -> std::io::Result<()> {
+async fn sync_exchange_rates() -> Result<()> {
     tracing::info!("Syncing exchange rates");
     // your sync logic here
     Ok(())
@@ -123,12 +127,12 @@ async fn hello() -> &'static str {
     "Hello, Rapina!"
 }
 
-async fn first_cronjob() -> std::io::Result<()> {
+async fn first_cronjob() -> Result<()> {
     tracing::info!("Doing some work (every 5 seconds)");
     Ok(())
 }
 
-async fn second_cronjob() -> std::io::Result<()> {
+async fn second_cronjob() -> Result<()> {
     tracing::info!("Doing some work (every 10 seconds)");
     Ok(())
 }
@@ -159,14 +163,10 @@ INFO first_cronjob: Doing some work (every 5 seconds)
 If a cron task returns an `Err`, the error is logged at the `error` level and the schedule continues uninterrupted:
 
 ```rust
-async fn flaky_task() -> std::io::Result<()> {
-    let result = do_something_unreliable().await;
-    if result.is_err() {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            "something went wrong",
-        ));
-    }
+use rapina::prelude::*;
+
+async fn flaky_task() -> Result<()> {
+    do_something_unreliable().await?;
     Ok(())
 }
 ```
