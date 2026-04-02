@@ -159,7 +159,7 @@ impl CronScheduler {
                 .await
                 .expect("Failed to shutdown Rapina background jobs");
         }
-        tracing::info!("Shutdown signal received, stopping cron scheduler");
+        tracing::info!("Cron scheduler stopped");
     }
 
     /// Returns the number of scheduled jobs, which have not yet been drained by starting the cron scheduler
