@@ -382,10 +382,11 @@ impl Rapina {
     /// Registers a new scheduled cronjob.
     /// The `CronScheduler` instance will be started during Rapina's webserver startup phase.
     #[cfg(feature = "cron-scheduler")]
-    pub fn cron<F, Fut>(mut self, cron_schedule: &str, task: F) -> Self
+    pub fn cron<F, Fut, E>(mut self, cron_schedule: &str, task: F) -> Self
     where
         F: Fn() -> Fut + Send + Sync + 'static,
-        Fut: Future<Output = std::io::Result<()>> + Send + 'static,
+        Fut: Future<Output = Result<(), E>> + Send + 'static,
+        E: std::error::Error + Send + 'static,
     {
         // Lazily initialize the scheduler if it's still None and get a mutable reference
         let cron_scheduler = self.cron_scheduler.get_or_insert_with(CronScheduler::new);
@@ -783,6 +784,7 @@ impl Default for Rapina {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::error::Error;
     use crate::middleware::TimeoutMiddleware;
     use http::StatusCode;
     use std::time::Duration;
@@ -1097,7 +1099,7 @@ mod tests {
     fn test_rapina_cron_adds_cronjob() {
         let app = Rapina::new().cron("1/5 * * * * *", || async {
             println!("cronjob 1");
-            Ok(())
+            Ok::<(), Error>(())
         });
         assert_eq!(app.cron_scheduler.unwrap().len(), 1);
     }
@@ -1108,12 +1110,20 @@ mod tests {
         let app = Rapina::new()
             .cron("1/5 * * * * *", || async {
                 println!("cronjob 1");
-                Ok(())
+                Ok::<(), Error>(())
             })
             .cron("1/5 * * * * *", || async {
                 println!("cronjob 2");
-                Ok(())
+                Ok::<(), Error>(())
             });
         assert_eq!(app.cron_scheduler.unwrap().len(), 2);
+    }
+
+    #[cfg(feature = "cron-scheduler")]
+    #[test]
+    #[should_panic]
+    fn test_rapina_cron_broken_cronjob_panics() {
+        let broken_schedule = "";
+        Rapina::new().cron(broken_schedule, || async { Ok::<(), Error>(()) });
     }
 }

@@ -6,6 +6,24 @@ use std::sync::Arc;
 use tokio_cron_scheduler::{Job, JobScheduler};
 use tokio_util::sync::CancellationToken;
 
+#[derive(Debug)]
+pub struct CronSchedulerError {
+    pub cron_schedule: String,
+    pub error: tokio_cron_scheduler::JobSchedulerError,
+}
+
+impl std::fmt::Display for CronSchedulerError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Failed to create cron job for schedule '{}': {}",
+            self.cron_schedule, self.error
+        )
+    }
+}
+
+impl std::error::Error for CronSchedulerError {}
+
 /// A background job scheduler that wraps `tokio_cron_scheduler::JobScheduler`.
 pub struct CronScheduler {
     jobs: Vec<Job>,
@@ -43,14 +61,15 @@ impl CronScheduler {
     /// Because there are no .await points during the blocking `task`, the task never yields.
     ///
     /// For graceful shutdown semantics to work as expected, make sure to not run blocking code as part of `task`.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the job cannot be created or if it fails to be added to the underlying scheduler.
-    pub fn schedule<F, Fut>(&mut self, cron_schedule: String, task: F) -> std::io::Result<()>
+    pub fn schedule<F, Fut, E>(
+        &mut self,
+        cron_schedule: String,
+        task: F,
+    ) -> Result<(), CronSchedulerError>
     where
         F: Fn() -> Fut + Send + Sync + 'static,
-        Fut: Future<Output = std::io::Result<()>> + Send + 'static,
+        Fut: Future<Output = Result<(), E>> + Send + 'static,
+        E: std::error::Error + Send + 'static,
     {
         //Wrap task function in an Arc so it can be safely cloned for every cron tick
         let task = Arc::new(task);
@@ -74,7 +93,10 @@ impl CronScheduler {
                 }
             })
         })
-        .expect("Failed to create Rapina background job template");
+        .map_err(|error| CronSchedulerError {
+            cron_schedule: cron_schedule.clone(),
+            error,
+        })?;
 
         let job_uuid = job.guid();
 
@@ -159,6 +181,7 @@ impl CronScheduler {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::error::Error;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::time::Duration;
 
@@ -174,10 +197,26 @@ mod tests {
     fn test_schedule_adds_job_to_vec_synchronously() {
         let mut scheduler = CronScheduler::new();
 
-        let result = scheduler.schedule("1/1 * * * * *".to_string(), || async { Ok(()) });
+        let result = scheduler.schedule("1/1 * * * * *".to_string(), || async {
+            Ok::<(), Error>(())
+        });
 
         assert!(result.is_ok());
         assert_eq!(scheduler.jobs.len(), 1);
+        assert!(scheduler.scheduler.is_none()); // Scheduler should not be created yet
+    }
+
+    #[test]
+    fn test_schedule_errors_on_bad_input() {
+        let mut scheduler = CronScheduler::new();
+
+        let broken_schedule = "";
+        let result = scheduler.schedule(broken_schedule.to_string(), || async {
+            Ok::<(), Error>(())
+        });
+
+        assert!(result.is_err());
+        assert_eq!(scheduler.jobs.len(), 0);
         assert!(scheduler.scheduler.is_none()); // Scheduler should not be created yet
     }
 
@@ -186,10 +225,14 @@ mod tests {
         let mut scheduler = CronScheduler::new();
 
         scheduler
-            .schedule("1/1 * * * * *".to_string(), || async { Ok(()) })
+            .schedule("1/1 * * * * *".to_string(), || async {
+                Ok::<(), Error>(())
+            })
             .unwrap();
         scheduler
-            .schedule("1/2 * * * * *".to_string(), || async { Ok(()) })
+            .schedule("1/2 * * * * *".to_string(), || async {
+                Ok::<(), Error>(())
+            })
             .unwrap();
 
         assert_eq!(scheduler.jobs.len(), 2);
@@ -214,7 +257,7 @@ mod tests {
                 let counter = counter_clone.clone();
                 async move {
                     counter.fetch_add(1, Ordering::SeqCst);
-                    Ok(())
+                    Ok::<(), Error>(())
                 }
             })
             .unwrap();
@@ -255,7 +298,9 @@ mod tests {
     fn test_is_empty_after_scheduling() {
         let mut scheduler = CronScheduler::new();
         scheduler
-            .schedule("1/1 * * * * *".to_string(), || async { Ok(()) })
+            .schedule("1/1 * * * * *".to_string(), || async {
+                Ok::<(), Error>(())
+            })
             .unwrap();
 
         assert!(
@@ -269,12 +314,16 @@ mod tests {
         let mut scheduler = CronScheduler::new();
 
         scheduler
-            .schedule("1/1 * * * * *".to_string(), || async { Ok(()) })
+            .schedule("1/1 * * * * *".to_string(), || async {
+                Ok::<(), Error>(())
+            })
             .unwrap();
         assert_eq!(scheduler.len(), 1);
 
         scheduler
-            .schedule("1/2 * * * * *".to_string(), || async { Ok(()) })
+            .schedule("1/2 * * * * *".to_string(), || async {
+                Ok::<(), Error>(())
+            })
             .unwrap();
         assert_eq!(scheduler.len(), 2);
     }

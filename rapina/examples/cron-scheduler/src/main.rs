@@ -5,14 +5,14 @@ async fn hello() -> &'static str {
     "Hello, Rapina!"
 }
 
-async fn first_cronjob() -> std::io::Result<()> {
+async fn first_cronjob() -> Result<()> {
     tracing::info!(
         "Doing some work (every 5 seconds and specifically starting at 1 second past the minute, i.e. executes at 00:01, 00:06, 00:11, ...)"
     );
     Ok(())
 }
 
-async fn second_cronjob() -> std::io::Result<()> {
+async fn second_cronjob() -> Result<()> {
     tracing::info!(
         "Doing some work (every 10 seconds, starting at 0 second past the minute, i.e. executes at 00:00, 00:10, 00:20, ...)"
     );
