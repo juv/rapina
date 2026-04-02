@@ -387,12 +387,8 @@ impl Rapina {
         F: Fn() -> Fut + Send + Sync + 'static,
         Fut: Future<Output = std::io::Result<()>> + Send + 'static,
     {
-        // Initialize cron_scheduler upon first .cron() call because it's set to None in Rapina::new()
-        if self.cron_scheduler.is_none() {
-            self.cron_scheduler = Some(CronScheduler::new());
-        }
-
-        let cron_scheduler = self.cron_scheduler.as_mut().unwrap();
+        // Lazily initialize the scheduler if it's still None and get a mutable reference
+        let cron_scheduler = self.cron_scheduler.get_or_insert(CronScheduler::new());
         cron_scheduler
             .schedule(cron_schedule.to_string(), task)
             .expect("Failed to schedule cron job");
