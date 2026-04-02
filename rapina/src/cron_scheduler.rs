@@ -1,3 +1,7 @@
+//! Background task scheduler for recurring cron-based jobs.
+//!
+//! For durable, persistent work use [`crate::jobs`] instead. This scheduler
+//! is in-memory only and does not survive process restarts.
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
 use tokio_cron_scheduler::{Job, JobScheduler};
