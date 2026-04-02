@@ -388,7 +388,7 @@ impl Rapina {
         Fut: Future<Output = std::io::Result<()>> + Send + 'static,
     {
         // Lazily initialize the scheduler if it's still None and get a mutable reference
-        let cron_scheduler = self.cron_scheduler.get_or_insert(CronScheduler::new());
+        let cron_scheduler = self.cron_scheduler.get_or_insert_with(CronScheduler::new);
         cron_scheduler
             .schedule(cron_schedule.to_string(), task)
             .expect("Failed to schedule cron job");
