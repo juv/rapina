@@ -26,6 +26,7 @@ async fn main() -> std::io::Result<()> {
        Typically you will prefix the header value with the static string "Bearer", i.e. "Bearer {your id token here}".
     6) The webserver should respond with the email address after parsing and validating the JWT
      */
+    tracing_subscriber::fmt().init();
 
     let router = Router::new().get("/email", get_email);
 
