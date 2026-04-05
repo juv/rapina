@@ -30,16 +30,22 @@ async fn main() -> std::io::Result<()> {
 
     let router = Router::new().get("/email", get_email);
 
+    // OIDC Discovery endpoint of Google Accounts API
     let discovery_url = "https://accounts.google.com/.well-known/openid-configuration";
-    let jwks_client = JwksClient::oidc(discovery_url.to_string());
+
+    // Cron schedule of 5 minutes to periodically refresh the JWKS content
+    let cron_refresh_schedule = "* */5 * * * *";
+
+    let jwks_client =
+        JwksClient::oidc(discovery_url.to_string(), cron_refresh_schedule.to_string());
 
     /*
     Alternatively use the direct JWKS url to fetch JwksClient::Direct
 
-    let jwks_client = JwksClient::Direct {
-        client: jwt::build_http_client(),
-        jwks_url: "https://www.googleapis.com/oauth2/v3/certs".to_string(),
-    };
+    let jwks_client = JwksClient::direct(
+        "https://www.googleapis.com/oauth2/v3/certs".to_string(),
+        cron_refresh_schedule.to_string(),
+    );
     */
 
     // Enable the audience validation (this is a _must have_ in production environments!).

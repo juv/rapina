@@ -57,6 +57,7 @@
 //! - [`Context`](extract::Context) - Access request context with trace_id
 //! - [`Validated`](extract::Validated) - Validate extracted data
 //! - [`Multipart`](extract::Multipart) - Parse multipart form data (e.g. file uploads)
+//! - [`JsonWebToken`](jwt::JsonWebToken) - Parse and validate Json Web Tokens with configurable JWKS
 
 //!
 //! ## Middleware

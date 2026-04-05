@@ -2,7 +2,6 @@ use crate::error::Error;
 use crate::extract::{FromRequestParts, PathParams};
 use crate::jwt;
 use crate::jwt::JwksClient;
-use crate::jwt::jwks_client::JwksProvider;
 use crate::state::AppState;
 use http::request::Parts;
 use jsonwebtoken::jwk::JwkSet;
@@ -134,16 +133,29 @@ where
                 Error::unauthorized("authorization header could not be parsed as String")
             })?;
 
-        let jwks_client: Option<&JwksClient> = state.get::<JwksClient>();
-        let validation: Option<&Validation> = state.get::<Validation>();
-
-        let jwks: Option<JwkSet> = match jwks_client {
-            Some(client) => Some(client.get_jwks_content().await?),
-            None => None,
+        let Some(jwks_client) = state.get::<JwksClient>() else {
+            tracing::error!(
+                "The Rapina state for JwksClient is empty. Did you forget to call .state(jwks_client)?"
+            );
+            return Err(Error::internal("internal authentication error"));
         };
 
-        let Some(jwks) = jwks else {
-            return Err(Error::internal("internal authentication error"));
+        let validation: Option<&Validation> = state.get::<Validation>();
+
+        // Try cache first, fall back to live fetch in case the cache warmup failed on startup
+        let jwks: JwkSet = match jwks_client.jwks_content().await {
+            Some(jwks) => jwks,
+            None => {
+                tracing::debug!("JWKS cache is empty, fetching live");
+                jwks_client.refresh_jwks_cache().await?;
+                match jwks_client.jwks_content().await {
+                    Some(jwks) => jwks,
+                    None => {
+                        tracing::error!("The configured JWKS server is unhealthy");
+                        return Err(Error::internal("internal authentication error"));
+                    }
+                }
+            }
         };
 
         JsonWebToken::new(jwks, validation, value.to_string())
@@ -211,7 +223,7 @@ mod tests {
 
     fn setup_jwks_client(addr: SocketAddr) -> JwksClient {
         let jwks_url = format!("http://{}/realms/master/protocol/openid-connect/cert", addr);
-        JwksClient::direct(jwks_url.to_string())
+        JwksClient::direct(jwks_url.to_string(), "* * * * * */5".to_string())
     }
 
     fn setup_jwks_client_oidc_discovery(addr: SocketAddr) -> JwksClient {
@@ -219,7 +231,7 @@ mod tests {
             "http://{}/realms/master/.well-known/openid-configuration",
             addr
         );
-        JwksClient::oidc(oidc_discovery_url.to_string())
+        JwksClient::oidc(oidc_discovery_url.to_string(), "* * * * * */5".to_string())
     }
 
     #[tokio::test]

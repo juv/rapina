@@ -52,7 +52,7 @@ Add the `jwks` feature to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rapina = { version = "0.10", features = ["jwks"] }
+rapina = { version = "0.11", features = ["jwks"] }
 ```
 
 This pulls in `hyper-rustls` for HTTPS fetching of the JWKS endpoint using your system's native root CA certificates.
