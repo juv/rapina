@@ -61,7 +61,7 @@ This pulls in Rapina's `cron-scheduler` for automatic periodic cache refresh and
 
 ## JWKS Client
 
-`JwksClient` is responsible for fetching and caching the JSON Web Key Set from the identity provider. It is registered as application state and used automatically by the `JsonWebToken` extractor on every request.
+Rapina's `JwksClient` is responsible for fetching and caching the JSON Web Key Set from the identity provider. It is registered as application state and used automatically by the `JsonWebToken` extractor on every request.
 
 ### Caching and Automatic Refresh
 
@@ -88,6 +88,8 @@ let jwks_client = JwksClient::direct(
 );
 ```
 
+> ⚠️ **The JWKS endpoint url must contain the HTTPS scheme, i.e. start with `https://`**. The lack of transport-layer security can have a severe impact on the security of the Rapina backend and its protected resources. Rapina will reject urls with plain HTTP scheme during startup.
+
 ### OIDC Discovery
 
 Use this when the provider publishes an OpenID Connect discovery document. Rapina will first fetch the discovery document, extract the `jwks_uri` field, and then fetch the actual JWKS:
@@ -102,6 +104,8 @@ let jwks_client = JwksClient::oidc(
 ```
 
 This is the **recommended approach** for standard OIDC providers, as it is more robust: if the provider rotates their JWKS URL, the discovery document is updated automatically and your application continues to work.
+
+> ⚠️ **The OIDC discovery url must contain the HTTPS scheme, i.e. start with `https://`**. The lack of transport-layer security can have a severe impact on the security of the Rapina backend and its protected resources. Rapina will reject urls with plain HTTP scheme during startup.
 
 **OIDC discovery flow:**
 1. Fetch `discovery_url` → parse `jwks_uri`
